@@ -1,32 +1,20 @@
+using System;
 using UnityEngine;
-using Whisper;
 using Whisper.Utils;
 using System.Threading.Tasks;
 
-public class SpeechToEmotion : MonoBehaviour
+public class RecorderManager : MonoBehaviour
 {
-    public WhisperManager whisper;
-    public AudioSource audioSource;
+    private AudioSource audioSource;
     private bool isRecording = false;
 
-    // --- 1. INITIALIZE ON START ---
-    async void Start()
+    private void Start()
     {
-        Debug.Log("Loading Whisper Model...");
-        // This ensures the model in StreamingAssets is actually loaded into memory
-        await whisper.InitModel(); 
-        Debug.Log("Whisper Model Ready!");
+        audioSource = GetComponent<AudioSource>();
     }
 
-    public async void ToggleRecording()
+    public void ToggleRecording()
     {
-        // Check if model is loaded before doing anything
-        if (whisper.IsLoading)
-        {
-            Debug.LogError("Model is still loading, please wait a moment!");
-            return;
-        }
-
         if (!isRecording)
         {
             isRecording = true;
@@ -47,16 +35,7 @@ public class SpeechToEmotion : MonoBehaviour
 
             var samples = new float[audioSource.clip.samples * audioSource.clip.channels];
             audioSource.clip.GetData(samples, 0);
-            AudioSender.SendAudio(audioSource);
-
-            // Send to Local Whisper
-            var result = await whisper.GetTextAsync(samples, audioSource.clip.frequency, audioSource.clip.channels);
-            
-            if (result != null)
-            {
-                string finalSpeech = result.Result;
-                Debug.Log($"You said: {finalSpeech}");
-            }
+            NetworkManager.SendAudio(audioSource);
         }
     }
     
